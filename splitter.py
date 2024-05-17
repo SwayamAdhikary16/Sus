@@ -1,20 +1,32 @@
 import pandas as pd
+import random
 
-def save_to_excel(data_array, header_length, excel_file_name):
-    # Splitting the data array based on the header length
-    header = data_array[:header_length]
-    rest_of_message = data_array[header_length:]
+def generate_random_binary_string(length):
+    return ''.join(random.choice(['0', '1']) for _ in range(length))
+
+
+def sem_split(data_array, param_filename, output_filename):
+    param_df = pd.read_excel(param_filename)
+    params = param_df.to_dict(orient='list')
     
-    # Creating a DataFrame to store the data
-    df = pd.DataFrame({'Header': [header], 'Rest_of_Message': [rest_of_message]})
+    params = {k: int(v[0]) for k, v in params.items()}
     
-    # Writing the DataFrame to an Excel file
-    df.to_excel(excel_file_name, index=False)
-    print(f"Data saved to {excel_file_name}")
+    data_dict = {}
+    start_idx = 0
+    for col_name, col_length in params.items():
+        end_idx = start_idx + col_length
+        data_dict[col_name] = ''.join(map(str, data_array[start_idx:end_idx]))
+        start_idx = end_idx
+    
+    df = pd.DataFrame([data_dict])
+    
+    df.to_excel(output_filename, index=False)
+    print(f"Data saved to {output_filename}")
 
-# Example usage:
-data_array = ['1'] * 16 + ['Data', 'to', 'be', 'saved', 'in', 'Excel']
-header_length = 16
-excel_file_name = 'data.xlsx'
 
-save_to_excel(data_array, header_length, excel_file_name)
+data_array = ['1'] * 16 + [str(i) for i in generate_random_binary_string(54)] 
+param_filename = 'sem.xlsx'  
+output_filename = 'data.xlsx'
+
+sem_split(data_array, param_filename, output_filename)
+    

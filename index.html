@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Topological Map</title>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
+    <script src="https://worldwind.arc.nasa.gov/web/worldwind.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
+    <style>
+        #map {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <button id="draw-rectangle">Draw Rectangle</button>
+    <script src="https://cdn.jsdelivr.net/npm/ol/ol.js" defer></script>
+    <script defer type="module">
+        window.addEventListener('load', function() {
+            var map = new ol.Map({
+                target: 'map',
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    })
+                ],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([0, 0]),
+                    zoom: 2
+                })
+            });
+
+            var drawSource = new ol.source.Vector({ wrapX: false });
+            var drawLayer = new ol.layer.Vector({
+                source: drawSource
+            });
+            map.addLayer(drawLayer);
+
+            var draw; // global so we can remove it later
+            function addDrawInteraction() {
+                if (draw) {
+                    map.removeInteraction(draw);
+                }
+                draw = new ol.interaction.Draw({
+                    source: drawSource,
+                    type: 'Circle',
+                    geometryFunction: ol.interaction.Draw.createBox()
+                });
+                map.addInteraction(draw);
+
+                // Add event listener for drawend event
+                draw.on('drawend', function(event) {
+                    var feature = event.feature;
+                    let extent = feature.getGeometry().getExtent();
+                    
+                    let bottomLeft = ol.proj.toLonLat([extent[0], extent[1]]);
+                    let topRight = ol.proj.toLonLat([extent[2], extent[3]]);
+                    
+                    let rectangleCoordinates = [
+                        { latitude: bottomLeft[1], longitude: bottomLeft[0] },
+                        { latitude: bottomLeft[1], longitude: topRight[0] },
+                        { latitude: topRight[1], longitude: topRight[0] },
+                        { latitude: topRight[1], longitude: bottomLeft[0] }
+                    ];
+
+                    console.log(rectangleCoordinates);
+
+                    var wwd = new WorldWind.WorldWindow("canvasId");
+                    var polygon = new WorldWind.SurfacePolygon(rectangleCoordinates);
+                    
+                    var polygonLayer = new WorldWind.RenderableLayer();
+                    polygonLayer.addRenderable(polygon);
+                    wwd.addLayer(polygonLayer);
+
+                    var minLatitude = 100; // replace with minimum latitude
+                    var maxLatitude = 100; // replace with maximum latitude
+                    var minLongitude = 100; // replace with minimum longitude
+                    var maxLongitude = 100; // replace with maximum longitude
+                });
+            }
+
+            document.getElementById('draw-rectangle').addEventListener('click', function() {
+                addDrawInteraction();
+            });
+        });
+    </script>
+</body>
+</html>

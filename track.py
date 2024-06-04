@@ -18,14 +18,14 @@ class Radar:
 
 class Intruder:
     def __init__(self, initial_loc):
-        self.path = [np.array(initial_loc) + np.array([i, i, abs(-i**2/11 + i)]) for i in range(15)]
+        self.path = [np.array(initial_loc) + np.array([i, i**2, i**3]) for i in range(15)]
 
 # Create the radars and intruder
 radars = {
-    'A': Radar('A', [1, 1, 1], [1, 0, 0], 10),
-    'B': Radar('B', [5, 5, 2], [0, 1, 0], 8),
-    'C': Radar('C', [4, 10, 10], [0, 0, 1], 6),
-    'D': Radar('D', [10, 8, 3], [0, 1, 0], 7)
+    'A': Radar('A', [1, 1, 1], [1, 0, 0], 15),
+    'B': Radar('B', [5, 5, 2], [0, 1, 0], 19),
+    'C': Radar('C', [4, 10, 10], [0, 0, 1], 20),
+    'D': Radar('D', [10, 8, 3], [0, 1, 1], 40)
 }
 intruder = Intruder([1, 1, 10])
 
@@ -54,7 +54,9 @@ for name, radar in radars.items():
     ax.scatter(*radar.loc, label=name)
 
 output = []
-for intruder_loc in intruder.path:
+red_points_count = 0  # Counter to keep track of the number of red points
+
+for i, intruder_loc in enumerate(intruder.path):
     ax.scatter(*intruder_loc, color='pink')
     plt.pause(0.2)  # Pause for half a second
     detection = {}
@@ -63,16 +65,18 @@ for intruder_loc in intruder.path:
             detection[name] = list(intruder_loc.tolist())
             ax.scatter(*intruder_loc,color = 'red')
             plt.pause(0.2)  # Pause for half a second
+            red_points_count += 1  # Increment the counter when a red point is plotted
     output.append(detection)
 
-
-
+    # Start plotting the predicted path after 3 red points have been plotted
+    if red_points_count >= 3:
+        for pred_loc in predicted_path[i:]:
+            ax.scatter(*pred_loc, color='blue')
 
 with open('radar_data.json', 'w') as f:
     json.dump(output, f)
 
-for pred_loc in predicted_path:
-    ax.scatter(*pred_loc, color='blue')
+
 
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
